@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Locate, Trash2, LogOut, Map as MapIcon, History, Info, ArrowLeft, Navigation, CheckCircle } from 'lucide-react';
+import { 
+  Locate, Trash2, LogOut, Map as MapIcon, History, Info, 
+  ArrowLeft, Navigation, CheckCircle, Menu, X, Star, Users, MapPin, Mail 
+} from 'lucide-react';
 import L from 'leaflet';
 
 // --- FIREBASE IMPORTS ---
@@ -34,19 +37,100 @@ const criarIcone = (emoji, avaliacao) => {
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
-// --- TELA 1: LOGIN ---
-function TelaLogin() {
+// --- TELA 1: LANDING PAGE (NOVA VITRINE) ---
+function TelaLanding() {
   const logarComGoogle = async () => { try { await signInWithPopup(auth, provider); } catch (error) { alert("Erro: " + error.message); } };
+
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#2c3e50', color: 'white', padding: '20px', textAlign: 'center' }}>
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>AcessaAí ♿</h1>
-      <p>Sua rede social de acessibilidade urbana.</p>
-      <button onClick={logarComGoogle} style={{ padding: '15px 30px', background: 'white', color: '#333', border: 'none', borderRadius: '50px', fontWeight: 'bold', display: 'flex', gap: '10px', cursor: 'pointer' }}>Entrar com Google</button>
+    <div style={{ fontFamily: 'sans-serif', color: '#2c3e50', overflowX: 'hidden' }}>
+      
+      {/* 1. NAVBAR / CABEÇALHO */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 5%', background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 1000 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ background: '#3498db', padding: '5px', borderRadius: '5px' }}>
+            <span style={{ fontSize: '24px' }}>♿</span>
+          </div>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#2c3e50' }}>AcessaAí</h1>
+        </div>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }} className="desktop-menu">
+          <a href="#como-funciona" style={{ textDecoration: 'none', color: '#7f8c8d', fontWeight: '500' }}>Como Funciona</a>
+          <a href="#contato" style={{ textDecoration: 'none', color: '#7f8c8d', fontWeight: '500' }}>Contato</a>
+          <button onClick={logarComGoogle} style={{ padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }}>
+            Entrar / Cadastrar
+          </button>
+        </div>
+      </nav>
+
+      {/* 2. HERÓI (HERO SECTION) */}
+      <header style={{ padding: '60px 5%', textAlign: 'center', background: 'linear-gradient(180deg, #fdfbfb 0%, #ebedee 100%)' }}>
+        <h2 style={{ fontSize: '2.5rem', marginBottom: '15px', lineHeight: 1.2 }}>Encontre e avalie a acessibilidade<br/>da sua cidade.</h2>
+        <p style={{ fontSize: '1.1rem', color: '#7f8c8d', maxWidth: '600px', margin: '0 auto 30px' }}>
+          Navegue por um mapa em tempo real, compartilhe rotas acessíveis e ajude a comunidade. Sua mobilidade é nossa prioridade.
+        </p>
+        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '40px' }}>
+          <button onClick={logarComGoogle} style={{ padding: '15px 30px', background: '#2c3e50', color: 'white', border: 'none', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 5px 15px rgba(44, 62, 80, 0.3)' }}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{width: 20}}/>
+            Entrar com Google
+          </button>
+          <a href="#como-funciona" style={{ padding: '15px 30px', background: 'white', color: '#2c3e50', border: '1px solid #ccc', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 'bold', textDecoration: 'none', cursor: 'pointer' }}>
+            Saiba Mais
+          </a>
+        </div>
+        
+        {/* Placeholder para Screenshot (Você pode colocar um print real depois) */}
+        <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', padding: '10px', borderRadius: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+            <div style={{background: '#eee', height: '300px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999'}}>
+                <span>📷 Aqui vai aparecer o Mapa do App</span>
+            </div>
+        </div>
+      </header>
+
+      {/* 3. COMO FUNCIONA */}
+      <section id="como-funciona" style={{ padding: '60px 5%', background: 'white' }}>
+        <h3 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '40px' }}>Como Funciona?</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
+          
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <div style={{ width: 60, height: 60, background: '#e8f4f8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#3498db' }}><MapIcon size={30}/></div>
+            <h4 style={{fontSize: '1.2rem'}}>1. Visualize o Mapa</h4>
+            <p style={{color: '#7f8c8d'}}>Veja barreiras e locais acessíveis em tempo real na sua região.</p>
+          </div>
+
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <div style={{ width: 60, height: 60, background: '#fff9c4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#fbc02d' }}><Star size={30}/></div>
+            <h4 style={{fontSize: '1.2rem'}}>2. Avalie Locais</h4>
+            <p style={{color: '#7f8c8d'}}>Marque locais como "Bom", "Médio" ou "Ruim" e ajude outros usuários.</p>
+          </div>
+
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <div style={{ width: 60, height: 60, background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#2ecc71' }}><Users size={30}/></div>
+            <h4 style={{fontSize: '1.2rem'}}>3. Colabore</h4>
+            <p style={{color: '#7f8c8d'}}>Deixe comentários e trace rotas seguras para todos.</p>
+          </div>
+          
+        </div>
+      </section>
+
+      {/* 4. RODAPÉ (CONFIANÇA) */}
+      <footer id="contato" style={{ background: '#2c3e50', color: 'white', padding: '40px 5%', textAlign: 'center' }}>
+        <div style={{ marginBottom: '20px' }}>
+            <h4 style={{margin: 0}}>AcessaAí ♿</h4>
+            <small>Mapeando a acessibilidade com você.</small>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={16}/> contato@acessaai.com</span>
+            <a href="#" style={{ color: '#bdc3c7', textDecoration: 'none' }}>Termos de Uso</a>
+            <a href="#" style={{ color: '#bdc3c7', textDecoration: 'none' }}>Política de Privacidade</a>
+        </div>
+        <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', fontSize: '0.9rem', color: '#95a5a6' }}>
+            &copy; 2026 AcessaAí. Todos os direitos reservados.
+        </div>
+      </footer>
     </div>
   );
 }
 
-// --- TELA 2: MENU (TUTORIAL VOLTOU!) ---
+// --- TELA 2: MENU (MANTIDA) ---
 function TelaInicial({ user }) {
   const navigate = useNavigate();
   return (
@@ -56,7 +140,7 @@ function TelaInicial({ user }) {
            <h2>Olá, {user.displayName?.split(' ')[0]}!</h2>
            <small style={{color: '#7f8c8d'}}>Vamos mapear hoje?</small>
         </div>
-        <button onClick={() => signOut(auth)} style={{ border: 'none', background: 'none', color: '#c0392b' }}><LogOut /></button>
+        <button onClick={() => signOut(auth)} style={{ border: 'none', background: 'none', color: '#c0392b' }} title="Sair"><LogOut /></button>
       </header>
       
       <div style={{ display: 'grid', gap: '15px' }}>
@@ -69,7 +153,6 @@ function TelaInicial({ user }) {
           <h3>Minhas Contribuições</h3>
         </div>
 
-        {/* BOTÃO DO TUTORIAL DE VOLTA 👇 */}
         <div onClick={() => navigate('/tutorial')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
           <div style={{background: '#95a5a6', padding: 10, borderRadius: 10, color: 'white'}}><Info size={24}/></div>
           <div><h3>Como funciona?</h3><small>Aprenda a usar</small></div>
@@ -79,7 +162,7 @@ function TelaInicial({ user }) {
   );
 }
 
-// --- TELA: TUTORIAL (RESTAURADA) ---
+// --- TELA: TUTORIAL ---
 function TelaTutorial() {
   const navigate = useNavigate();
   return (
@@ -107,7 +190,7 @@ function TelaTutorial() {
   );
 }
 
-// --- TELA 3: MAPA (COM ROTAS) ---
+// --- TELA 3: MAPA (MANTIDA) ---
 function TelaMapa() {
   const [pontos, setPontos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
@@ -166,7 +249,6 @@ function TelaMapa() {
       <MapContainer center={[-5.915, -35.263]} zoom={13} style={{ flex: 1 }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OSM" />
         <ControladorDeCliques />
-        {/* DESENHA A ROTA AQUI 👇 */}
         {rota && <Polyline positions={rota} color="#3498db" dashArray="10, 10" weight={5} />}
         
         {pontos.map(p => (
@@ -178,7 +260,6 @@ function TelaMapa() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                    <small>Por: {p.userName?.split(' ')[0]}</small>
                    <div style={{ display: 'flex', gap: '5px' }}>
-                     {/* BOTÃO DE ROTA 👇 */}
                      <button onClick={() => tracarRota(p)} title="Traçar rota até aqui" style={{ background: '#3498db', color: 'white', border: 'none', borderRadius: '5px', padding: '5px', cursor: 'pointer' }}><Navigation size={16}/></button>
                      {auth.currentUser.uid === p.userId && (
                        <button onClick={() => deleteDoc(doc(db, "pontos", p.id_firebase))} style={{ background: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', padding: '5px' }}><Trash2 size={16}/></button>
@@ -223,7 +304,7 @@ function TelaMapa() {
   );
 }
 
-function TelaHistorico() { return <div style={{padding: 20}}><h2>Em breve...</h2></div> }
+function TelaHistorico() { return <div style={{padding: 20}}><h2>Histórico em breve...</h2></div> }
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -231,10 +312,10 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={user ? <TelaInicial user={user} /> : <TelaLogin />} />
-        <Route path="/mapa" element={user ? <TelaMapa /> : <TelaLogin />} />
-        <Route path="/historico" element={user ? <TelaHistorico /> : <TelaLogin />} />
-        <Route path="/tutorial" element={user ? <TelaTutorial /> : <TelaLogin />} />
+        <Route path="/" element={user ? <TelaInicial user={user} /> : <TelaLanding />} />
+        <Route path="/mapa" element={user ? <TelaMapa /> : <TelaLanding />} />
+        <Route path="/historico" element={user ? <TelaHistorico /> : <TelaLanding />} />
+        <Route path="/tutorial" element={user ? <TelaTutorial /> : <TelaLanding />} />
       </Routes>
     </Router>
   );
