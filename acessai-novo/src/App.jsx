@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polyline 
 import 'leaflet/dist/leaflet.css';
 import { 
   Locate, Trash2, LogOut, Map as MapIcon, History, Info, 
-  ArrowLeft, Navigation, CheckCircle, Menu, X, Star, Users, MapPin, Mail 
+  ArrowLeft, Navigation, CheckCircle, Star, Users, Mail 
 } from 'lucide-react';
 import L from 'leaflet';
 
@@ -37,7 +37,7 @@ const criarIcone = (emoji, avaliacao) => {
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
-// --- TELA 1: LANDING PAGE (NOVA VITRINE) ---
+// --- TELA 1: LANDING PAGE (VITRINE) ---
 function TelaLanding() {
   const logarComGoogle = async () => { try { await signInWithPopup(auth, provider); } catch (error) { alert("Erro: " + error.message); } };
 
@@ -52,11 +52,10 @@ function TelaLanding() {
           </div>
           <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#2c3e50' }}>AcessaAí</h1>
         </div>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }} className="desktop-menu">
-          <a href="#como-funciona" style={{ textDecoration: 'none', color: '#7f8c8d', fontWeight: '500' }}>Como Funciona</a>
-          <a href="#contato" style={{ textDecoration: 'none', color: '#7f8c8d', fontWeight: '500' }}>Contato</a>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <a href="#como-funciona" style={{ textDecoration: 'none', color: '#7f8c8d', fontWeight: '500', display: 'none' }}>Como Funciona</a> {/* Oculto em mobile para não quebrar */}
           <button onClick={logarComGoogle} style={{ padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }}>
-            Entrar / Cadastrar
+            Entrar
           </button>
         </div>
       </nav>
@@ -72,46 +71,46 @@ function TelaLanding() {
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{width: 20}}/>
             Entrar com Google
           </button>
-          <a href="#como-funciona" style={{ padding: '15px 30px', background: 'white', color: '#2c3e50', border: '1px solid #ccc', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 'bold', textDecoration: 'none', cursor: 'pointer' }}>
-            Saiba Mais
-          </a>
         </div>
         
-        {/* Placeholder para Screenshot (Você pode colocar um print real depois) */}
-        <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', padding: '10px', borderRadius: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-            <div style={{background: '#eee', height: '300px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999'}}>
-                <span>📷 Aqui vai aparecer o Mapa do App</span>
-            </div>
+        {/* IMAGEM DO MAPA (Substitua o src abaixo pelo link do seu print depois se quiser) */}
+        <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', padding: '10px', borderRadius: '15px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+            <img 
+              src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+              alt="Mapa em tempo real do AcessaAí" 
+              style={{ width: '100%', borderRadius: '10px', display: 'block' }}
+            />
+            <small style={{display:'block', marginTop: 10, color: '#999'}}>*Imagem ilustrativa do mapa em funcionamento</small>
         </div>
       </header>
 
-      {/* 3. COMO FUNCIONA */}
+      {/* 3. COMO FUNCIONA (TEXTO ATUALIZADO) */}
       <section id="como-funciona" style={{ padding: '60px 5%', background: 'white' }}>
         <h3 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '40px' }}>Como Funciona?</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
           
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ width: 60, height: 60, background: '#e8f4f8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#3498db' }}><MapIcon size={30}/></div>
-            <h4 style={{fontSize: '1.2rem'}}>1. Visualize o Mapa</h4>
-            <p style={{color: '#7f8c8d'}}>Veja barreiras e locais acessíveis em tempo real na sua região.</p>
+            <h4 style={{fontSize: '1.2rem'}}>1. Cadastre-se e visualize</h4>
+            <p style={{color: '#7f8c8d'}}>Faça seu login rápido e tenha acesso imediato ao mapa da sua cidade.</p>
           </div>
 
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ width: 60, height: 60, background: '#fff9c4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#fbc02d' }}><Star size={30}/></div>
-            <h4 style={{fontSize: '1.2rem'}}>2. Avalie Locais</h4>
-            <p style={{color: '#7f8c8d'}}>Marque locais como "Bom", "Médio" ou "Ruim" e ajude outros usuários.</p>
+            <h4 style={{fontSize: '1.2rem'}}>2. Avalie locais</h4>
+            <p style={{color: '#7f8c8d'}}>Classifique a acessibilidade como <strong>Bom</strong>, <strong>Médio</strong> ou <strong>Ruim</strong>.</p>
           </div>
 
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ width: 60, height: 60, background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#2ecc71' }}><Users size={30}/></div>
-            <h4 style={{fontSize: '1.2rem'}}>3. Colabore</h4>
-            <p style={{color: '#7f8c8d'}}>Deixe comentários e trace rotas seguras para todos.</p>
+            <h4 style={{fontSize: '1.2rem'}}>3. Compartilhe</h4>
+            <p style={{color: '#7f8c8d'}}>Trace rotas, leia comentários e ajude a comunidade a se mover melhor.</p>
           </div>
           
         </div>
       </section>
 
-      {/* 4. RODAPÉ (CONFIANÇA) */}
+      {/* 4. RODAPÉ */}
       <footer id="contato" style={{ background: '#2c3e50', color: 'white', padding: '40px 5%', textAlign: 'center' }}>
         <div style={{ marginBottom: '20px' }}>
             <h4 style={{margin: 0}}>AcessaAí ♿</h4>
@@ -119,8 +118,6 @@ function TelaLanding() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={16}/> contato@acessaai.com</span>
-            <a href="#" style={{ color: '#bdc3c7', textDecoration: 'none' }}>Termos de Uso</a>
-            <a href="#" style={{ color: '#bdc3c7', textDecoration: 'none' }}>Política de Privacidade</a>
         </div>
         <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', fontSize: '0.9rem', color: '#95a5a6' }}>
             &copy; 2026 AcessaAí. Todos os direitos reservados.
@@ -130,7 +127,7 @@ function TelaLanding() {
   );
 }
 
-// --- TELA 2: MENU (MANTIDA) ---
+// --- TELA 2: MENU ---
 function TelaInicial({ user }) {
   const navigate = useNavigate();
   return (
@@ -190,7 +187,7 @@ function TelaTutorial() {
   );
 }
 
-// --- TELA 3: MAPA (MANTIDA) ---
+// --- TELA 3: MAPA ---
 function TelaMapa() {
   const [pontos, setPontos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
