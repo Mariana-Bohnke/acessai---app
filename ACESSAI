@@ -1,0 +1,403 @@
+mport React, { useState, useEffect, useRef } from 'react';
+import { base44 } from '@/api/base44Client';
+import { motion } from 'framer-motion';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Icon } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Filter, Eye, Ear, Brain, Activity, Navigation, MapPin, Star, Search, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerTrigger } from "@/components/ui/drawer";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Camera, ThumbsUp, ThumbsDown, AlertTriangle, Heart } from "lucide-react";
+import { toast } from "sonner";
+
+// Fix Leaflet default icon issue
+delete Icon.Default.prototype._getIconUrl;
+Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Custom icons for pins
+const createPinIcon = (color) => new Icon({
+  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const icons = {
+  green: createPinIcon('green'),
+  orange: createPinIcon('orange'), // Yellow/Orange
+  red: createPinIcon('red'),
+  grey: createPinIcon('grey'),
+};
+
+function LocationMarker() {
+  const [position, setPosition] = useState(null);
+  const map = useMap();
+
+  useEffect(() => {
+    map.locate().on("locationfound", function (e) {
+      setPosition(e.latlng);
+      map.flyTo(e.latlng, map.getZoom());
+    });
+  }, [map]);
+
+  return position === null ? null : (
+    <Marker position={position} icon={icons.grey}>
+      <Popup>Você está aqui</Popup>
+    </Marker>
+  );
+}
+
+export default function MapPage() {
+  const [places, setPlaces] = useState([]);
+  const [activeFilters, setActiveFilters] = useState(['motor']); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [filteredPlaces, setFilteredPlaces] = useState([]);
+  const [isFavorite, setIsFavorite] = useState(false); // Mock state for demo
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    // Load places
+    const loadPlaces = async () => {
+      try {
+        const data = await base44.entities.Place.list();
+        setPlaces(data);
+        setFilteredPlaces(data);
+      } catch (error) {
+        console.error("Failed to load places", error);
+      }
+    };
+    loadPlaces();
+  }, []);
+
+  useEffect(() => {
+    // Search and Filter logic
+    const lowerQuery = searchQuery.toLowerCase();
+    const filtered = places.filter(place => {
+      const matchesSearch = 
+        place.name.toLowerCase().includes(lowerQuery) || 
+        place.address.toLowerCase().includes(lowerQuery) ||
+        place.category.toLowerCase().includes(lowerQuery);
+      
+      return matchesSearch;
+    });
+    
+    // Sort by relevance (mock: simple alphabetical if search is empty, or match index if not)
+    filtered.sort((a, b) => {
+      if (!searchQuery) return 0;
+      return a.name.toLowerCase().indexOf(lowerQuery) - b.name.toLowerCase().indexOf(lowerQuery);
+    });
+
+    setFilteredPlaces(filtered);
+  }, [searchQuery, places]);
+
+  const getAggregateStatus = (place) => {
+    if (activeFilters.length === 0) return 'grey';
+    
+    let hasInaccessible = false;
+    let hasPartial = false;
+    
+    for (const filter of activeFilters) {
+      const status = place.accessibility_status?.[filter];
+      if (status === 'inaccessible') hasInaccessible = true;
+      if (status === 'partial') hasPartial = true;
+    }
+
+    if (hasInaccessible) return 'red';
+    if (hasPartial) return 'orange';
+    return 'green';
+  };
+
+  const toggleFilter = (id) => {
+    setActiveFilters(prev => 
+      prev.includes(id) 
+        ? prev.filter(f => f !== id)
+        : [...prev, id]
+    );
+  };
+
+  const filters = [
+    { id: 'motor', label: 'Motora', icon: Activity },
+    { id: 'visual', label: 'Visual', icon: Eye },
+    { id: 'auditory', label: 'Auditiva', icon: Ear },
+    { id: 'cognitive', label: 'Cognitiva', icon: Brain },
+  ];
+
+  return (
+    <div className="relative h-screen w-full">
+      {/* Header / Search / Filter Bar */}
+      <div className="absolute top-0 left-0 w-full z-[1000] bg-gradient-to-b from-white/90 to-transparent pt-4 px-4 pb-4 flex flex-col gap-3">
+        
+        {/* Search Bar */}
+        <div className="relative w-full shadow-md rounded-full">
+          <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+          <Input 
+            placeholder="Buscar local, endereço ou categoria..." 
+            className="pl-12 pr-10 py-6 rounded-full border-none bg-white shadow-none text-base"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar snap-x pl-1">
+          {filters.map(f => {
+            const isActive = activeFilters.includes(f.id);
+            const Icon = f.icon;
+            return (
+              <button
+                key={f.id}
+                onClick={() => toggleFilter(f.id)}
+                className={`snap-center flex items-center gap-2 px-4 py-2 rounded-full shadow-sm transition-all border ${
+                  isActive 
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-200' 
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium whitespace-nowrap">{f.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Map */}
+      <div className="h-full w-full">
+        <MapContainer 
+          ref={mapRef}
+          center={[-23.55052, -46.633309]} 
+          zoom={13} 
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          />
+          <LocationMarker />
+          
+          {filteredPlaces.map(place => (
+            <Marker 
+              key={place.id}
+              position={[place.latitude, place.longitude]}
+              icon={icons[getAggregateStatus(place)]}
+              eventHandlers={{
+                click: () => {
+                  setSelectedPlace(place);
+                  setIsDetailsOpen(true);
+                },
+              }}
+            />
+          ))}
+        </MapContainer>
+      </div>
+
+      {/* Place Details Drawer */}
+      <Drawer open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DrawerContent>
+          {selectedPlace && (
+            <div className="p-6 pb-10">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">{selectedPlace.name}</h2>
+                  <p className="text-slate-500 text-sm flex items-center gap-1 mt-1">
+                    <MapPin className="w-3 h-3" /> {selectedPlace.address}
+                  </p>
+                </div>
+                <Badge className={`
+                  ${getAggregateStatus(selectedPlace) === 'green' ? 'bg-green-100 text-green-700' : ''}
+                  ${getAggregateStatus(selectedPlace) === 'orange' ? 'bg-orange-100 text-orange-700' : ''}
+                  ${getAggregateStatus(selectedPlace) === 'red' ? 'bg-red-100 text-red-700' : ''}
+                  ${getAggregateStatus(selectedPlace) === 'grey' ? 'bg-slate-100 text-slate-700' : ''}
+                `}>
+                  {getAggregateStatus(selectedPlace) === 'green' && 'Acessível'}
+                  {getAggregateStatus(selectedPlace) === 'orange' && 'Parcial'}
+                  {getAggregateStatus(selectedPlace) === 'red' && 'Inacessível'}
+                  {getAggregateStatus(selectedPlace) === 'grey' && 'Não Avaliado'}
+                </Badge>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-4 mb-6">
+                <p className="text-slate-700 leading-relaxed text-sm">
+                  {selectedPlace.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {selectedPlace.features?.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-100 p-2 rounded-lg shadow-sm">
+                    <CheckCircle className="w-4 h-4 text-indigo-600" />
+                    <span className="capitalize">{feature.replace(/_/g, ' ')}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {selectedPlace.image_url && (
+                 <div className="mb-6 rounded-xl overflow-hidden h-40">
+                    <img src={selectedPlace.image_url} alt={selectedPlace.name} className="w-full h-full object-cover" />
+                 </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button 
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                  onClick={() => {
+                    if (selectedPlace) {
+                      const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.latitude},${selectedPlace.longitude}`;
+                      window.open(url, '_blank');
+                    }
+                  }}
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Navegar
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setIsReviewOpen(true)}
+                >
+                  <Star className="w-4 h-4 mr-2" />
+                  Avaliar
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className={`border ${isFavorite ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-slate-200 text-slate-400'}`}
+                  onClick={() => {
+                     setIsFavorite(!isFavorite);
+                     toast.success(isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos ❤️");
+                  }}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                </Button>
+              </div>
+
+              <button className="w-full mt-4 text-xs text-slate-400 flex items-center justify-center gap-1 hover:text-slate-600 transition-colors">
+                <AlertTriangle className="w-3 h-3" />
+                Reportar erro ou contestar informação
+              </button>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      {/* Review Drawer */}
+      <Drawer open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <DrawerContent>
+          <div className="p-6 pb-10">
+             <h2 className="text-xl font-bold text-slate-900 mb-4">Avaliar Acessibilidade</h2>
+             <p className="text-sm text-slate-500 mb-6">Sua opinião ajuda milhares de pessoas.</p>
+             
+             <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">
+                     Como está a acessibilidade?
+                     <span className="text-xs font-normal text-slate-500 block mt-0.5">
+                        Avaliando para: {activeFilters.map(f => filters.find(filter => filter.id === f)?.label).join(', ')}
+                     </span>
+                  </label>
+                  <div className="flex gap-3">
+                     <button className="flex-1 py-3 rounded-xl border-2 border-green-100 bg-green-50 text-green-700 font-medium hover:bg-green-100 transition-colors flex flex-col items-center gap-1">
+                        <ThumbsUp className="w-5 h-5" />
+                        Boa
+                     </button>
+                     <button className="flex-1 py-3 rounded-xl border-2 border-yellow-100 bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition-colors flex flex-col items-center gap-1">
+                        <div className="w-5 h-5 flex items-center justify-center font-bold">~</div>
+                        Parcial
+                     </button>
+                     <button className="flex-1 py-3 rounded-xl border-2 border-red-100 bg-red-50 text-red-700 font-medium hover:bg-red-100 transition-colors flex flex-col items-center gap-1">
+                        <ThumbsDown className="w-5 h-5" />
+                        Ruim
+                     </button>
+                  </div>
+                </div>
+
+                <div>
+                   <label className="text-sm font-medium text-slate-700 mb-2 block">Adicionar Evidência (Opcional)</label>
+                   <button className="w-full py-4 border-2 border-dashed border-slate-300 rounded-xl text-slate-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2">
+                      <Camera className="w-5 h-5" />
+                      Tirar foto ou escolher da galeria
+                   </button>
+                </div>
+
+                <div>
+                   <label className="text-sm font-medium text-slate-700 mb-2 block">Comentário</label>
+                   <Textarea placeholder="Conte mais detalhes sobre a experiência..." className="bg-slate-50 border-slate-200" />
+                </div>
+
+                <Button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 text-lg"
+                  onClick={() => {
+                    // Gamification Logic
+                    toast.success("Avaliação enviada! +50 pontos 🏆", {
+                      description: "Você está a 30 pontos do próximo nível!",
+                      duration: 4000,
+                    });
+                    
+                    // Create simulated notification
+                    base44.entities.Notification.create({
+                       user_id: 'current_user',
+                       title: 'Obrigado pela contribuição!',
+                       message: 'Sua avaliação ajuda a comunidade a crescer. Continue assim!',
+                       type: 'achievement',
+                       read: false
+                    }).catch(console.error);
+
+                    setIsReviewOpen(false);
+                    setIsDetailsOpen(false);
+                  }}
+                >
+                  Enviar Avaliação
+                </Button>
+             </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* FAB for Real Location */}
+      <button 
+        className="absolute bottom-24 right-4 bg-white p-3 rounded-full shadow-xl text-slate-700 z-[1000] hover:bg-slate-50 active:scale-95 transition-all"
+        onClick={() => {
+          if (mapRef.current) {
+            mapRef.current.locate().on("locationfound", function (e) {
+              mapRef.current.flyTo(e.latlng, 16);
+            });
+          }
+        }}
+      >
+        <Navigation className="w-6 h-6 text-indigo-600" />
+      </button>
+    </div>
+  );
+}
+
+// Helper icons
+function CheckCircle({ className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  )
+}
