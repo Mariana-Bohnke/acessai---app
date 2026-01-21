@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Locate, Trash2, LogOut, Map as MapIcon, History, Info, ArrowLeft, Navigation } from 'lucide-react'; // Removi Camera
+import { Locate, Trash2, LogOut, Map as MapIcon, History, Info, ArrowLeft, Navigation, CheckCircle } from 'lucide-react';
 import L from 'leaflet';
 
 // --- FIREBASE IMPORTS ---
-// Removi o 'storage' daqui para não dar erro
 import { db } from './firebaseConfig'; 
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
@@ -47,28 +46,68 @@ function TelaLogin() {
   );
 }
 
-// --- TELA 2: MENU ---
+// --- TELA 2: MENU (TUTORIAL VOLTOU!) ---
 function TelaInicial({ user }) {
   const navigate = useNavigate();
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-        <h2>Olá, {user.displayName?.split(' ')[0]}!</h2>
+        <div>
+           <h2>Olá, {user.displayName?.split(' ')[0]}!</h2>
+           <small style={{color: '#7f8c8d'}}>Vamos mapear hoje?</small>
+        </div>
         <button onClick={() => signOut(auth)} style={{ border: 'none', background: 'none', color: '#c0392b' }}><LogOut /></button>
       </header>
+      
       <div style={{ display: 'grid', gap: '15px' }}>
-        <div onClick={() => navigate('/mapa')} style={{ background: 'linear-gradient(135deg, #3498db, #2980b9)', color: 'white', padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer' }}>
+        <div onClick={() => navigate('/mapa')} style={{ background: 'linear-gradient(135deg, #3498db, #2980b9)', color: 'white', padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(52, 152, 219, 0.3)' }}>
           <MapIcon size={32} /> <div><h3>Abrir Mapa</h3><small>Navegar e Reportar</small></div>
         </div>
+        
         <div onClick={() => navigate('/historico')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-          <History size={24} color="#f1c40f" /> <h3>Minhas Contribuições</h3>
+          <div style={{background: '#f1c40f', padding: 10, borderRadius: 10, color: 'white'}}><History size={24}/></div>
+          <h3>Minhas Contribuições</h3>
+        </div>
+
+        {/* BOTÃO DO TUTORIAL DE VOLTA 👇 */}
+        <div onClick={() => navigate('/tutorial')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
+          <div style={{background: '#95a5a6', padding: 10, borderRadius: 10, color: 'white'}}><Info size={24}/></div>
+          <div><h3>Como funciona?</h3><small>Aprenda a usar</small></div>
         </div>
       </div>
     </div>
   );
 }
 
-// --- TELA 3: MAPA (SEM FOTOS) ---
+// --- TELA: TUTORIAL (RESTAURADA) ---
+function TelaTutorial() {
+  const navigate = useNavigate();
+  return (
+    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', marginBottom: '20px', cursor: 'pointer' }}><ArrowLeft /> Voltar</button>
+      <h2>Como usar o AcessaAí 💡</h2>
+      <div style={{ display: 'grid', gap: '20px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ background: '#3498db', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>1</div>
+          <div><strong>Abra o Mapa:</strong> Clique no botão azul para ver a cidade.</div>
+        </div>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ background: '#2ecc71', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>2</div>
+          <div><strong>Avalie:</strong> Clique no local, escolha a cor (Verde/Amarelo/Vermelho) e deixe seu comentário.</div>
+        </div>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ background: '#f1c40f', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>3</div>
+          <div><strong>Rotas:</strong> Clique no pino de um problema e aperte o botão azul <Navigation size={14} style={{display:'inline'}}/> para traçar o caminho até lá.</div>
+        </div>
+      </div>
+      <div style={{ marginTop: '30px', padding: '15px', background: '#e8f6f3', borderRadius: '10px', color: '#16a085', display: 'flex', gap: '10px' }}>
+        <CheckCircle /> <small>Pronto! Você está ajudando a cidade.</small>
+      </div>
+    </div>
+  );
+}
+
+// --- TELA 3: MAPA (COM ROTAS) ---
 function TelaMapa() {
   const [pontos, setPontos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
@@ -109,13 +148,17 @@ function TelaMapa() {
   };
 
   const tracarRota = (destino) => {
-    navigator.geolocation.getCurrentPosition((pos) => { setRota([[pos.coords.latitude, pos.coords.longitude], [destino.lat, destino.lng]]); });
+    if (!navigator.geolocation) return alert("Preciso da sua localização!");
+    navigator.geolocation.getCurrentPosition((pos) => { 
+        setRota([[pos.coords.latitude, pos.coords.longitude], [destino.lat, destino.lng]]); 
+        alert("Rota traçada! Siga a linha azul pontilhada.");
+    });
   };
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '15px', background: '#2c3e50', color: 'white', display: 'flex', justifyContent: 'space-between', zIndex: 1000 }}>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'white' }}><ArrowLeft /></button>
+        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: 5 }}><ArrowLeft /> Voltar</button>
         <strong>Mapa AcessaAí</strong>
         <div style={{ width: 24 }}></div>
       </div>
@@ -123,7 +166,9 @@ function TelaMapa() {
       <MapContainer center={[-5.915, -35.263]} zoom={13} style={{ flex: 1 }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OSM" />
         <ControladorDeCliques />
-        {rota && <Polyline positions={rota} color="blue" dashArray="10, 10" />}
+        {/* DESENHA A ROTA AQUI 👇 */}
+        {rota && <Polyline positions={rota} color="#3498db" dashArray="10, 10" weight={5} />}
+        
         {pontos.map(p => (
           <Marker key={p.id_firebase} position={[p.lat, p.lng]} icon={criarIcone(p.emoji, p.avaliacao)}>
             <Popup>
@@ -133,7 +178,8 @@ function TelaMapa() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                    <small>Por: {p.userName?.split(' ')[0]}</small>
                    <div style={{ display: 'flex', gap: '5px' }}>
-                     <button onClick={() => tracarRota(p)} title="Ir até lá" style={{ background: '#3498db', color: 'white', border: 'none', borderRadius: '5px', padding: '5px' }}><Navigation size={16}/></button>
+                     {/* BOTÃO DE ROTA 👇 */}
+                     <button onClick={() => tracarRota(p)} title="Traçar rota até aqui" style={{ background: '#3498db', color: 'white', border: 'none', borderRadius: '5px', padding: '5px', cursor: 'pointer' }}><Navigation size={16}/></button>
                      {auth.currentUser.uid === p.userId && (
                        <button onClick={() => deleteDoc(doc(db, "pontos", p.id_firebase))} style={{ background: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', padding: '5px' }}><Trash2 size={16}/></button>
                      )}
@@ -177,7 +223,7 @@ function TelaMapa() {
   );
 }
 
-function TelaHistorico() { return <div style={{padding: 20}}><h2>Histórico em breve...</h2></div> }
+function TelaHistorico() { return <div style={{padding: 20}}><h2>Em breve...</h2></div> }
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -188,6 +234,7 @@ export default function App() {
         <Route path="/" element={user ? <TelaInicial user={user} /> : <TelaLogin />} />
         <Route path="/mapa" element={user ? <TelaMapa /> : <TelaLogin />} />
         <Route path="/historico" element={user ? <TelaHistorico /> : <TelaLogin />} />
+        <Route path="/tutorial" element={user ? <TelaTutorial /> : <TelaLogin />} />
       </Routes>
     </Router>
   );
