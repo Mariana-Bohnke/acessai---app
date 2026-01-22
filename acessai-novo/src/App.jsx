@@ -7,11 +7,14 @@ import {
   ArrowLeft, Navigation, CheckCircle, Star, Users, Mail 
 } from 'lucide-react';
 import L from 'leaflet';
+// Import da imagem fornecida
+import imagemMapa from './assets/mapa-icones.png'; // Vamos assumir que você salvará a imagem com este nome na pasta src/assets
 
 // --- FIREBASE IMPORTS ---
 import { db } from './firebaseConfig'; 
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+// Adicionado where para o filtro do histórico
+import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where } from 'firebase/firestore';
 
 // --- CONFIGURAÇÃO ---
 const opcoesDeficiencia = {
@@ -37,80 +40,65 @@ const criarIcone = (emoji, avaliacao) => {
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
-// --- TELA 1: LANDING PAGE (VITRINE) ---
+// --- TELA 1: LANDING PAGE (COM A NOVA FOTO) ---
 function TelaLanding() {
   const logarComGoogle = async () => { try { await signInWithPopup(auth, provider); } catch (error) { alert("Erro: " + error.message); } };
 
   return (
     <div style={{ fontFamily: 'sans-serif', color: '#2c3e50', overflowX: 'hidden' }}>
       
-      {/* 1. NAVBAR / CABEÇALHO */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 5%', background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 1000 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ background: '#3498db', padding: '5px', borderRadius: '5px' }}>
-            <span style={{ fontSize: '24px' }}>♿</span>
-          </div>
+          <div style={{ background: '#3498db', padding: '5px', borderRadius: '5px' }}><span style={{ fontSize: '24px' }}>♿</span></div>
           <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#2c3e50' }}>AcessaAí</h1>
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <a href="#como-funciona" style={{ textDecoration: 'none', color: '#7f8c8d', fontWeight: '500', display: 'none' }}>Como Funciona</a> {/* Oculto em mobile para não quebrar */}
-          <button onClick={logarComGoogle} style={{ padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }}>
-            Entrar
-          </button>
+          <button onClick={logarComGoogle} style={{ padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }}>Entrar</button>
         </div>
       </nav>
 
-      {/* 2. HERÓI (HERO SECTION) */}
       <header style={{ padding: '60px 5%', textAlign: 'center', background: 'linear-gradient(180deg, #fdfbfb 0%, #ebedee 100%)' }}>
         <h2 style={{ fontSize: '2.5rem', marginBottom: '15px', lineHeight: 1.2 }}>Encontre e avalie a acessibilidade<br/>da sua cidade.</h2>
-        <p style={{ fontSize: '1.1rem', color: '#7f8c8d', maxWidth: '600px', margin: '0 auto 30px' }}>
-          Navegue por um mapa em tempo real, compartilhe rotas acessíveis e ajude a comunidade. Sua mobilidade é nossa prioridade.
-        </p>
+        <p style={{ fontSize: '1.1rem', color: '#7f8c8d', maxWidth: '600px', margin: '0 auto 30px' }}>Navegue por um mapa em tempo real, compartilhe rotas acessíveis e ajude a comunidade. Sua mobilidade é nossa prioridade.</p>
         <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '40px' }}>
           <button onClick={logarComGoogle} style={{ padding: '15px 30px', background: '#2c3e50', color: 'white', border: 'none', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 5px 15px rgba(44, 62, 80, 0.3)' }}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{width: 20}}/>
-            Entrar com Google
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{width: 20}}/> Entrar com Google
           </button>
         </div>
         
-        {/* IMAGEM DO MAPA (Substitua o src abaixo pelo link do seu print depois se quiser) */}
+        {/* IMAGEM DO MAPA ATUALIZADA */}
         <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', padding: '10px', borderRadius: '15px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+            {/* IMPORTANTE: Você precisa salvar a imagem que enviou na pasta src/assets do seu projeto com o nome mapa-icones.png */}
             <img 
-              src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
-              alt="Mapa em tempo real do AcessaAí" 
+              src={imagemMapa} 
+              alt="Mapa em tempo real do AcessaAí com marcadores" 
               style={{ width: '100%', borderRadius: '10px', display: 'block' }}
             />
-            <small style={{display:'block', marginTop: 10, color: '#999'}}>*Imagem ilustrativa do mapa em funcionamento</small>
+            <small style={{display:'block', marginTop: 10, color: '#999'}}>*Imagem ilustrativa do mapa com contribuições da comunidade</small>
         </div>
       </header>
 
-      {/* 3. COMO FUNCIONA (TEXTO ATUALIZADO) */}
       <section id="como-funciona" style={{ padding: '60px 5%', background: 'white' }}>
         <h3 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '40px' }}>Como Funciona?</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
-          
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ width: 60, height: 60, background: '#e8f4f8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#3498db' }}><MapIcon size={30}/></div>
             <h4 style={{fontSize: '1.2rem'}}>1. Cadastre-se e visualize</h4>
             <p style={{color: '#7f8c8d'}}>Faça seu login rápido e tenha acesso imediato ao mapa da sua cidade.</p>
           </div>
-
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ width: 60, height: 60, background: '#fff9c4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#fbc02d' }}><Star size={30}/></div>
             <h4 style={{fontSize: '1.2rem'}}>2. Avalie locais</h4>
             <p style={{color: '#7f8c8d'}}>Classifique a acessibilidade como <strong>Bom</strong>, <strong>Médio</strong> ou <strong>Ruim</strong>.</p>
           </div>
-
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ width: 60, height: 60, background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#2ecc71' }}><Users size={30}/></div>
             <h4 style={{fontSize: '1.2rem'}}>3. Compartilhe</h4>
             <p style={{color: '#7f8c8d'}}>Trace rotas, leia comentários e ajude a comunidade a se mover melhor.</p>
           </div>
-          
         </div>
       </section>
 
-      {/* 4. RODAPÉ */}
       <footer id="contato" style={{ background: '#2c3e50', color: 'white', padding: '40px 5%', textAlign: 'center' }}>
         <div style={{ marginBottom: '20px' }}>
             <h4 style={{margin: 0}}>AcessaAí ♿</h4>
@@ -119,9 +107,7 @@ function TelaLanding() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={16}/> contato@acessaai.com</span>
         </div>
-        <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', fontSize: '0.9rem', color: '#95a5a6' }}>
-            &copy; 2026 AcessaAí. Todos os direitos reservados.
-        </div>
+        <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', fontSize: '0.9rem', color: '#95a5a6' }}>&copy; 2026 AcessaAí. Todos os direitos reservados.</div>
       </footer>
     </div>
   );
@@ -133,26 +119,18 @@ function TelaInicial({ user }) {
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-        <div>
-           <h2>Olá, {user.displayName?.split(' ')[0]}!</h2>
-           <small style={{color: '#7f8c8d'}}>Vamos mapear hoje?</small>
-        </div>
+        <div><h2>Olá, {user.displayName?.split(' ')[0]}!</h2><small style={{color: '#7f8c8d'}}>Vamos mapear hoje?</small></div>
         <button onClick={() => signOut(auth)} style={{ border: 'none', background: 'none', color: '#c0392b' }} title="Sair"><LogOut /></button>
       </header>
-      
       <div style={{ display: 'grid', gap: '15px' }}>
         <div onClick={() => navigate('/mapa')} style={{ background: 'linear-gradient(135deg, #3498db, #2980b9)', color: 'white', padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(52, 152, 219, 0.3)' }}>
           <MapIcon size={32} /> <div><h3>Abrir Mapa</h3><small>Navegar e Reportar</small></div>
         </div>
-        
         <div onClick={() => navigate('/historico')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-          <div style={{background: '#f1c40f', padding: 10, borderRadius: 10, color: 'white'}}><History size={24}/></div>
-          <h3>Minhas Contribuições</h3>
+          <div style={{background: '#f1c40f', padding: 10, borderRadius: 10, color: 'white'}}><History size={24}/></div><h3>Minhas Contribuições</h3>
         </div>
-
         <div onClick={() => navigate('/tutorial')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-          <div style={{background: '#95a5a6', padding: 10, borderRadius: 10, color: 'white'}}><Info size={24}/></div>
-          <div><h3>Como funciona?</h3><small>Aprenda a usar</small></div>
+          <div style={{background: '#95a5a6', padding: 10, borderRadius: 10, color: 'white'}}><Info size={24}/></div><div><h3>Como funciona?</h3><small>Aprenda a usar</small></div>
         </div>
       </div>
     </div>
@@ -167,22 +145,65 @@ function TelaTutorial() {
       <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', marginBottom: '20px', cursor: 'pointer' }}><ArrowLeft /> Voltar</button>
       <h2>Como usar o AcessaAí 💡</h2>
       <div style={{ display: 'grid', gap: '20px', marginTop: '20px' }}>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <div style={{ background: '#3498db', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>1</div>
-          <div><strong>Abra o Mapa:</strong> Clique no botão azul para ver a cidade.</div>
-        </div>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <div style={{ background: '#2ecc71', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>2</div>
-          <div><strong>Avalie:</strong> Clique no local, escolha a cor (Verde/Amarelo/Vermelho) e deixe seu comentário.</div>
-        </div>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <div style={{ background: '#f1c40f', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>3</div>
-          <div><strong>Rotas:</strong> Clique no pino de um problema e aperte o botão azul <Navigation size={14} style={{display:'inline'}}/> para traçar o caminho até lá.</div>
-        </div>
+        <div style={{ display: 'flex', gap: '15px' }}><div style={{ background: '#3498db', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>1</div><div><strong>Abra o Mapa:</strong> Clique no botão azul para ver a cidade.</div></div>
+        <div style={{ display: 'flex', gap: '15px' }}><div style={{ background: '#2ecc71', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>2</div><div><strong>Avalie:</strong> Clique no local, escolha a cor (Verde/Amarelo/Vermelho) e deixe seu comentário.</div></div>
+        <div style={{ display: 'flex', gap: '15px' }}><div style={{ background: '#f1c40f', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>3</div><div><strong>Rotas:</strong> Clique no pino de um problema e aperte o botão azul <Navigation size={14} style={{display:'inline'}}/> para traçar o caminho até lá.</div></div>
       </div>
-      <div style={{ marginTop: '30px', padding: '15px', background: '#e8f6f3', borderRadius: '10px', color: '#16a085', display: 'flex', gap: '10px' }}>
-        <CheckCircle /> <small>Pronto! Você está ajudando a cidade.</small>
-      </div>
+      <div style={{ marginTop: '30px', padding: '15px', background: '#e8f6f3', borderRadius: '10px', color: '#16a085', display: 'flex', gap: '10px' }}><CheckCircle /> <small>Pronto! Você está ajudando a cidade.</small></div>
+    </div>
+  );
+}
+
+// --- TELA: HISTÓRICO (FUNCIONAL) ---
+function TelaHistorico() {
+  const [meusPontos, setMeusPontos] = useState([]);
+  const navigate = useNavigate();
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    if (!user) return;
+    // Busca apenas os pontos do usuário logado, ordenados por data
+    const q = query(collection(db, "pontos"), where("userId", "==", user.uid), orderBy("data", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMeusPontos(snapshot.docs.map(doc => ({ id_firebase: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const apagarPonto = async (id) => {
+    if (confirm("Tem certeza que deseja excluir esta contribuição?")) {
+      await deleteDoc(doc(db, "pontos", id));
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+      <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', marginBottom: '20px', cursor: 'pointer', color: '#2c3e50' }}><ArrowLeft /> Voltar</button>
+      <h2 style={{ color: '#2c3e50' }}>Minhas Contribuições 📝</h2>
+      
+      {meusPontos.length === 0 ? (
+        <p style={{ color: '#7f8c8d', fontStyle: 'italic', textAlign: 'center', marginTop: '40px' }}>Você ainda não marcou nenhum ponto no mapa.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '15px' }}>
+          {meusPontos.map(p => (
+            <div key={p.id_firebase} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: `5px solid ${coresAvaliacao[p.avaliacao] || '#ccc'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
+                <div style={{ fontSize: '24px' }}>{p.emoji}</div>
+                <div>
+                  <strong style={{ color: '#2c3e50', display: 'block', fontSize: '1.1rem' }}>{p.texto}</strong>
+                  <small style={{ color: '#7f8c8d', display: 'block', marginTop: '4px' }}>
+                    {new Date(p.data).toLocaleDateString()} • Avaliação: <span style={{textTransform: 'capitalize', fontWeight: 'bold', color: coresAvaliacao[p.avaliacao]}}>{p.avaliacao}</span>
+                  </small>
+                  {p.comentario && <p style={{ margin: '8px 0 0', fontSize: '14px', color: '#555', fontStyle: 'italic' }}>"{p.comentario}"</p>}
+                </div>
+              </div>
+              <button onClick={() => apagarPonto(p.id_firebase)} style={{ background: '#ffebee', color: '#c0392b', border: 'none', borderRadius: '8px', padding: '10px', cursor: 'pointer', transition: '0.2s', marginLeft: '10px' }} title="Excluir contribuição">
+                <Trash2 size={20} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -300,8 +321,6 @@ function TelaMapa() {
     </div>
   );
 }
-
-function TelaHistorico() { return <div style={{padding: 20}}><h2>Histórico em breve...</h2></div> }
 
 export default function App() {
   const [user, setUser] = useState(null);
