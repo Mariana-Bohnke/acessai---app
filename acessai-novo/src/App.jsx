@@ -4,17 +4,18 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, Polyline 
 import 'leaflet/dist/leaflet.css';
 import { 
   Locate, Trash2, LogOut, Map as MapIcon, History, Info, 
-  ArrowLeft, Navigation, CheckCircle, Star, Users, Mail 
+  ArrowLeft, Navigation, CheckCircle, Menu, X, Star, Users, MapPin, Mail, Eye, Shield, FileText 
 } from 'lucide-react';
 import L from 'leaflet';
-// Import da imagem fornecida
-import imagemMapa from './assets/mapa-icones.png'; // Vamos assumir que você salvará a imagem com este nome na pasta src/assets
+
+// --- IMPORT DA IMAGEM (AQUI ESTÁ A MÁGICA 📸) ---
+// Certifique-se de que sua imagem se chama 'print.png' e está na pasta src
+import printApp from './print.png'; 
 
 // --- FIREBASE IMPORTS ---
 import { db } from './firebaseConfig'; 
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-// Adicionado where para o filtro do histórico
-import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 
 // --- CONFIGURAÇÃO ---
 const opcoesDeficiencia = {
@@ -40,97 +41,158 @@ const criarIcone = (emoji, avaliacao) => {
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
-// --- TELA 1: LANDING PAGE (COM A NOVA FOTO) ---
+// --- ESTILO GLOBAL PARA ACESSIBILIDADE (Foco visível) ---
+const GlobalAccessibilityStyles = () => (
+  <style>{`
+    *:focus-visible {
+      outline: 4px solid #e67e22 !important; /* Laranja forte para destaque no TAB */
+      outline-offset: 4px;
+    }
+    /* Aumentar contraste de seleção de texto */
+    ::selection {
+      background-color: #0056b3;
+      color: white;
+    }
+  `}</style>
+);
+
+// --- TELA 1: LANDING PAGE (COM FOTO REAL E ACESSIBILIDADE) ---
 function TelaLanding() {
   const logarComGoogle = async () => { try { await signInWithPopup(auth, provider); } catch (error) { alert("Erro: " + error.message); } };
 
   return (
-    <div style={{ fontFamily: 'sans-serif', color: '#2c3e50', overflowX: 'hidden' }}>
+    <div style={{ fontFamily: 'sans-serif', color: '#000', overflowX: 'hidden', lineHeight: 1.6, backgroundColor: '#fff' }}>
+      <GlobalAccessibilityStyles />
       
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 5%', background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 1000 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ background: '#3498db', padding: '5px', borderRadius: '5px' }}><span style={{ fontSize: '24px' }}>♿</span></div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#2c3e50' }}>AcessaAí</h1>
+      {/* 1. NAVBAR DE ALTO CONTRASTE */}
+      <nav aria-label="Menu Principal" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 5%', background: '#fff', borderBottom: '3px solid #000', position: 'sticky', top: 0, zIndex: 1000 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ background: '#000', padding: '10px', borderRadius: '8px', color: '#fff' }} aria-hidden="true">
+            <span style={{ fontSize: '28px' }}>♿</span>
+          </div>
+          <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: '900', color: '#000', letterSpacing: '-0.5px' }}>AcessaAí</h1>
         </div>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <button onClick={logarComGoogle} style={{ padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }}>Entrar</button>
+        <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }} className="desktop-menu">
+          <a href="#como-funciona" style={{ textDecoration: 'none', color: '#000', fontWeight: '700', fontSize: '1.2rem', padding: '10px' }}>Como Funciona</a>
+          <button onClick={logarComGoogle} aria-label="Acessar conta com Google" style={{ padding: '14px 28px', background: '#0056b3', color: 'white', border: '3px solid #000', borderRadius: '50px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', transition: '0.2s' }}>
+            Acessar / Cadastrar
+          </button>
         </div>
       </nav>
 
-      <header style={{ padding: '60px 5%', textAlign: 'center', background: 'linear-gradient(180deg, #fdfbfb 0%, #ebedee 100%)' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '15px', lineHeight: 1.2 }}>Encontre e avalie a acessibilidade<br/>da sua cidade.</h2>
-        <p style={{ fontSize: '1.1rem', color: '#7f8c8d', maxWidth: '600px', margin: '0 auto 30px' }}>Navegue por um mapa em tempo real, compartilhe rotas acessíveis e ajude a comunidade. Sua mobilidade é nossa prioridade.</p>
-        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '40px' }}>
-          <button onClick={logarComGoogle} style={{ padding: '15px 30px', background: '#2c3e50', color: 'white', border: 'none', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 5px 15px rgba(44, 62, 80, 0.3)' }}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{width: 20}}/> Entrar com Google
+      {/* 2. HERÓI (IMAGEM REAL AQUI 👇) */}
+      <header role="banner" style={{ padding: '80px 5%', textAlign: 'center', background: '#f4f4f4' }}>
+        <h2 style={{ fontSize: '3rem', marginBottom: '25px', lineHeight: 1.1, color: '#000', fontWeight: '900' }}>
+          Encontre e avalie a acessibilidade<br/>da sua cidade.
+        </h2>
+        <p style={{ fontSize: '1.4rem', color: '#222', maxWidth: '750px', margin: '0 auto 40px', fontWeight: '500' }}>
+          Navegue por um mapa colaborativo em tempo real. Compartilhe rotas seguras e avalie locais.<br/>
+          <strong>Sua mobilidade é a nossa prioridade.</strong>
+        </p>
+        
+        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
+          <button onClick={logarComGoogle} style={{ padding: '18px 36px', background: '#000', color: '#fff', border: 'none', borderRadius: '50px', fontSize: '1.3rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 5px 0px rgba(0,0,0,0.5)' }}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" aria-hidden="true" style={{width: 28, height: 28, background: 'white', borderRadius: '50%', padding: 2}}/>
+            Acessar com Google
           </button>
+          <a href="#como-funciona" style={{ padding: '18px 36px', background: '#fff', color: '#000', border: '3px solid #000', borderRadius: '50px', fontSize: '1.3rem', fontWeight: 'bold', textDecoration: 'none', cursor: 'pointer' }}>
+            Saiba Mais
+          </a>
         </div>
         
-        {/* IMAGEM DO MAPA ATUALIZADA */}
-        <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', padding: '10px', borderRadius: '15px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
-            {/* IMPORTANTE: Você precisa salvar a imagem que enviou na pasta src/assets do seu projeto com o nome mapa-icones.png */}
+        {/* EXIBIÇÃO DA IMAGEM REAL */}
+        <div style={{ maxWidth: '900px', margin: '0 auto', border: '3px solid #000', borderRadius: '15px', overflow: 'hidden', boxShadow: '10px 10px 0px rgba(0,0,0,0.2)' }}>
+            {/* Se o print.png estiver na pasta src, ele vai aparecer aqui */}
             <img 
-              src={imagemMapa} 
-              alt="Mapa em tempo real do AcessaAí com marcadores" 
-              style={{ width: '100%', borderRadius: '10px', display: 'block' }}
+              src={printApp} 
+              alt="Captura de tela do aplicativo AcessaAí mostrando o mapa da cidade com pinos coloridos indicando locais acessíveis e barreiras urbanas." 
+              style={{ width: '100%', height: 'auto', display: 'block' }}
             />
-            <small style={{display:'block', marginTop: 10, color: '#999'}}>*Imagem ilustrativa do mapa com contribuições da comunidade</small>
         </div>
       </header>
 
-      <section id="como-funciona" style={{ padding: '60px 5%', background: 'white' }}>
-        <h3 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '40px' }}>Como Funciona?</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', maxWidth: '1000px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <div style={{ width: 60, height: 60, background: '#e8f4f8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#3498db' }}><MapIcon size={30}/></div>
-            <h4 style={{fontSize: '1.2rem'}}>1. Cadastre-se e visualize</h4>
-            <p style={{color: '#7f8c8d'}}>Faça seu login rápido e tenha acesso imediato ao mapa da sua cidade.</p>
+      {/* 3. COMO FUNCIONA (ÍCONES GRANDES) */}
+      <section id="como-funciona" aria-labelledby="titulo-como-funciona" style={{ padding: '80px 5%', background: 'white' }}>
+        <h3 id="titulo-como-funciona" style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '60px', color: '#000', fontWeight: '800' }}>Como Funciona?</h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', maxWidth: '1100px', margin: '0 auto' }}>
+          
+          <div style={{ textAlign: 'center', padding: '30px', background: '#fff', borderRadius: '15px', border: '3px solid #000' }}>
+            <div style={{ width: 80, height: 80, background: '#0056b3', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: 'white', border: '3px solid #000' }} aria-hidden="true"><MapIcon size={40}/></div>
+            <h4 style={{fontSize: '1.5rem', marginBottom: '10px', color: '#000', fontWeight:'800'}}>1. Visualize o Mapa</h4>
+            <p style={{color: '#000', fontSize: '1.2rem'}}>Identifique barreiras e locais acessíveis com ícones de alto contraste.</p>
           </div>
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <div style={{ width: 60, height: 60, background: '#fff9c4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#fbc02d' }}><Star size={30}/></div>
-            <h4 style={{fontSize: '1.2rem'}}>2. Avalie locais</h4>
-            <p style={{color: '#7f8c8d'}}>Classifique a acessibilidade como <strong>Bom</strong>, <strong>Médio</strong> ou <strong>Ruim</strong>.</p>
+
+          <div style={{ textAlign: 'center', padding: '30px', background: '#fff', borderRadius: '15px', border: '3px solid #000' }}>
+            <div style={{ width: 80, height: 80, background: '#d35400', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: 'white', border: '3px solid #000' }} aria-hidden="true"><Star size={40}/></div>
+            <h4 style={{fontSize: '1.5rem', marginBottom: '10px', color: '#000', fontWeight:'800'}}>2. Avalie Locais</h4>
+            <p style={{color: '#000', fontSize: '1.2rem'}}>Classifique usando cores universais: Verde (Bom), Amarelo (Médio) ou Vermelho (Ruim).</p>
           </div>
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <div style={{ width: 60, height: 60, background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#2ecc71' }}><Users size={30}/></div>
-            <h4 style={{fontSize: '1.2rem'}}>3. Compartilhe</h4>
-            <p style={{color: '#7f8c8d'}}>Trace rotas, leia comentários e ajude a comunidade a se mover melhor.</p>
+
+          <div style={{ textAlign: 'center', padding: '30px', background: '#fff', borderRadius: '15px', border: '3px solid #000' }}>
+            <div style={{ width: 80, height: 80, background: '#27ae60', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: 'white', border: '3px solid #000' }} aria-hidden="true"><Users size={40}/></div>
+            <h4 style={{fontSize: '1.5rem', marginBottom: '10px', color: '#000', fontWeight:'800'}}>3. Colabore</h4>
+            <p style={{color: '#000', fontSize: '1.2rem'}}>Deixe comentários e ajude a traçar rotas seguras para todos.</p>
           </div>
+          
         </div>
       </section>
 
-      <footer id="contato" style={{ background: '#2c3e50', color: 'white', padding: '40px 5%', textAlign: 'center' }}>
-        <div style={{ marginBottom: '20px' }}>
-            <h4 style={{margin: 0}}>AcessaAí ♿</h4>
-            <small>Mapeando a acessibilidade com você.</small>
+      {/* 4. RODAPÉ (LINKS LEGAIS) */}
+      <footer role="contentinfo" style={{ background: '#000', color: 'white', padding: '60px 5%', textAlign: 'center', borderTop: '5px solid #0056b3' }}>
+        <div style={{ marginBottom: '30px' }}>
+            <h4 style={{margin: '0 0 10px 0', fontSize: '1.8rem', color: '#fff', fontWeight:'900'}}>AcessaAí ♿</h4>
+            <p style={{color: '#ddd', fontSize: '1.2rem'}}>Mapeando a acessibilidade com você.</p>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={16}/> contato@acessaai.com</span>
+        
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginBottom: '40px', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}><Mail size={24}/> contato@acessaai.com</span>
         </div>
-        <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', fontSize: '0.9rem', color: '#95a5a6' }}>&copy; 2026 AcessaAí. Todos os direitos reservados.</div>
+
+        {/* Links Legais e Acessibilidade */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap', fontSize: '1.2rem' }}>
+            <a href="#" style={{ color: '#8ecae6', textDecoration: 'underline', padding: '10px' }} aria-label="Ler Termos de Uso"><FileText size={20} style={{marginRight: 8, verticalAlign: 'middle'}}/>Termos de Uso</a>
+            <span style={{color: '#555'}} aria-hidden="true">|</span>
+            <a href="#" style={{ color: '#8ecae6', textDecoration: 'underline', padding: '10px' }} aria-label="Ler Política de Privacidade"><Shield size={20} style={{marginRight: 8, verticalAlign: 'middle'}}/>Política de Privacidade</a>
+            <span style={{color: '#555'}} aria-hidden="true">|</span>
+            <a href="#" style={{ color: '#ffb703', textDecoration: 'underline', fontWeight: 'bold', padding: '10px', background: '#000', border: '2px solid #ffb703', borderRadius: '8px' }} aria-label="Página de Acessibilidade Digital"><Eye size={20} style={{marginRight: 8, verticalAlign: 'middle'}}/>Acessibilidade Digital</a>
+        </div>
+
+        <div style={{ borderTop: '1px solid #333', marginTop: '40px', paddingTop: '20px', fontSize: '1rem', color: '#aaa' }}>
+            &copy; 2026 AcessaAí. Todos os direitos reservados.
+        </div>
       </footer>
     </div>
   );
 }
 
-// --- TELA 2: MENU ---
+// --- TELA 2: MENU (MANTIDA COM PEQUENOS AJUSTES DE CONTRASTE) ---
 function TelaInicial({ user }) {
   const navigate = useNavigate();
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <GlobalAccessibilityStyles />
       <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-        <div><h2>Olá, {user.displayName?.split(' ')[0]}!</h2><small style={{color: '#7f8c8d'}}>Vamos mapear hoje?</small></div>
-        <button onClick={() => signOut(auth)} style={{ border: 'none', background: 'none', color: '#c0392b' }} title="Sair"><LogOut /></button>
+        <div>
+           <h2>Olá, {user.displayName?.split(' ')[0]}!</h2>
+           <small style={{color: '#333', fontSize: '1.1rem', fontWeight: '500'}}>Vamos mapear hoje?</small>
+        </div>
+        <button onClick={() => signOut(auth)} style={{ border: '2px solid #c0392b', background: 'white', color: '#c0392b', padding: '8px', borderRadius: '50%' }} title="Sair da conta"><LogOut /></button>
       </header>
+      
       <div style={{ display: 'grid', gap: '15px' }}>
-        <div onClick={() => navigate('/mapa')} style={{ background: 'linear-gradient(135deg, #3498db, #2980b9)', color: 'white', padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(52, 152, 219, 0.3)' }}>
-          <MapIcon size={32} /> <div><h3>Abrir Mapa</h3><small>Navegar e Reportar</small></div>
+        <div onClick={() => navigate('/mapa')} role="button" tabIndex="0" style={{ background: 'linear-gradient(135deg, #004494, #003366)', color: 'white', padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', border: '2px solid #000' }}>
+          <MapIcon size={32} /> <div><h3 style={{margin:0, fontSize: '1.4rem'}}>Abrir Mapa</h3><small style={{fontSize: '1rem'}}>Navegar e Reportar</small></div>
         </div>
-        <div onClick={() => navigate('/historico')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-          <div style={{background: '#f1c40f', padding: 10, borderRadius: 10, color: 'white'}}><History size={24}/></div><h3>Minhas Contribuições</h3>
+        
+        <div onClick={() => navigate('/historico')} role="button" tabIndex="0" style={{ background: '#fff', border: '3px solid #000', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
+          <div style={{background: '#f1c40f', padding: 10, borderRadius: 10, color: 'black', border: '2px solid #000'}}><History size={24}/></div>
+          <h3 style={{margin:0, color: '#000'}}>Minhas Contribuições</h3>
         </div>
-        <div onClick={() => navigate('/tutorial')} style={{ background: '#fff', border: '1px solid #eee', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-          <div style={{background: '#95a5a6', padding: 10, borderRadius: 10, color: 'white'}}><Info size={24}/></div><div><h3>Como funciona?</h3><small>Aprenda a usar</small></div>
+
+        <div onClick={() => navigate('/tutorial')} role="button" tabIndex="0" style={{ background: '#fff', border: '3px solid #000', padding: '20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
+          <div style={{background: '#7f8c8d', padding: 10, borderRadius: 10, color: 'white', border: '2px solid #000'}}><Info size={24}/></div>
+          <div><h3 style={{margin:0, color: '#000'}}>Como funciona?</h3><small style={{color: '#333', fontWeight:'bold'}}>Aprenda a usar</small></div>
         </div>
       </div>
     </div>
@@ -142,73 +204,28 @@ function TelaTutorial() {
   const navigate = useNavigate();
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', marginBottom: '20px', cursor: 'pointer' }}><ArrowLeft /> Voltar</button>
-      <h2>Como usar o AcessaAí 💡</h2>
+      <GlobalAccessibilityStyles />
+      <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '18px', marginBottom: '20px', cursor: 'pointer', color: '#0056b3', fontWeight: 'bold' }}><ArrowLeft /> Voltar</button>
+      <h2 style={{color: '#000', fontSize: '2rem'}}>Como usar o AcessaAí 💡</h2>
       <div style={{ display: 'grid', gap: '20px', marginTop: '20px' }}>
-        <div style={{ display: 'flex', gap: '15px' }}><div style={{ background: '#3498db', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>1</div><div><strong>Abra o Mapa:</strong> Clique no botão azul para ver a cidade.</div></div>
-        <div style={{ display: 'flex', gap: '15px' }}><div style={{ background: '#2ecc71', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>2</div><div><strong>Avalie:</strong> Clique no local, escolha a cor (Verde/Amarelo/Vermelho) e deixe seu comentário.</div></div>
-        <div style={{ display: 'flex', gap: '15px' }}><div style={{ background: '#f1c40f', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>3</div><div><strong>Rotas:</strong> Clique no pino de um problema e aperte o botão azul <Navigation size={14} style={{display:'inline'}}/> para traçar o caminho até lá.</div></div>
-      </div>
-      <div style={{ marginTop: '30px', padding: '15px', background: '#e8f6f3', borderRadius: '10px', color: '#16a085', display: 'flex', gap: '10px' }}><CheckCircle /> <small>Pronto! Você está ajudando a cidade.</small></div>
-    </div>
-  );
-}
-
-// --- TELA: HISTÓRICO (FUNCIONAL) ---
-function TelaHistorico() {
-  const [meusPontos, setMeusPontos] = useState([]);
-  const navigate = useNavigate();
-  const user = auth.currentUser;
-
-  useEffect(() => {
-    if (!user) return;
-    // Busca apenas os pontos do usuário logado, ordenados por data
-    const q = query(collection(db, "pontos"), where("userId", "==", user.uid), orderBy("data", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMeusPontos(snapshot.docs.map(doc => ({ id_firebase: doc.id, ...doc.data() })));
-    });
-    return () => unsubscribe();
-  }, [user]);
-
-  const apagarPonto = async (id) => {
-    if (confirm("Tem certeza que deseja excluir esta contribuição?")) {
-      await deleteDoc(doc(db, "pontos", id));
-    }
-  };
-
-  return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '16px', marginBottom: '20px', cursor: 'pointer', color: '#2c3e50' }}><ArrowLeft /> Voltar</button>
-      <h2 style={{ color: '#2c3e50' }}>Minhas Contribuições 📝</h2>
-      
-      {meusPontos.length === 0 ? (
-        <p style={{ color: '#7f8c8d', fontStyle: 'italic', textAlign: 'center', marginTop: '40px' }}>Você ainda não marcou nenhum ponto no mapa.</p>
-      ) : (
-        <div style={{ display: 'grid', gap: '15px' }}>
-          {meusPontos.map(p => (
-            <div key={p.id_firebase} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: `5px solid ${coresAvaliacao[p.avaliacao] || '#ccc'}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
-                <div style={{ fontSize: '24px' }}>{p.emoji}</div>
-                <div>
-                  <strong style={{ color: '#2c3e50', display: 'block', fontSize: '1.1rem' }}>{p.texto}</strong>
-                  <small style={{ color: '#7f8c8d', display: 'block', marginTop: '4px' }}>
-                    {new Date(p.data).toLocaleDateString()} • Avaliação: <span style={{textTransform: 'capitalize', fontWeight: 'bold', color: coresAvaliacao[p.avaliacao]}}>{p.avaliacao}</span>
-                  </small>
-                  {p.comentario && <p style={{ margin: '8px 0 0', fontSize: '14px', color: '#555', fontStyle: 'italic' }}>"{p.comentario}"</p>}
-                </div>
-              </div>
-              <button onClick={() => apagarPonto(p.id_firebase)} style={{ background: '#ffebee', color: '#c0392b', border: 'none', borderRadius: '8px', padding: '10px', cursor: 'pointer', transition: '0.2s', marginLeft: '10px' }} title="Excluir contribuição">
-                <Trash2 size={20} />
-              </button>
-            </div>
-          ))}
+        <div style={{ display: 'flex', gap: '15px', background: '#fff', padding: '15px', borderRadius: '10px', border: '2px solid #000' }}>
+          <div style={{ background: '#0056b3', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', flexShrink: 0, border: '2px solid #000' }}>1</div>
+          <div><strong style={{fontSize: '1.2rem', color: '#000'}}>Abra o Mapa:</strong><br/><span style={{fontSize:'1.1rem', color:'#333'}}>Clique no botão azul para ver a cidade.</span></div>
         </div>
-      )}
+        <div style={{ display: 'flex', gap: '15px', background: '#fff', padding: '15px', borderRadius: '10px', border: '2px solid #000' }}>
+          <div style={{ background: '#27ae60', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', flexShrink: 0, border: '2px solid #000' }}>2</div>
+          <div><strong style={{fontSize: '1.2rem', color: '#000'}}>Avalie:</strong><br/><span style={{fontSize:'1.1rem', color:'#333'}}>Clique no local, escolha a cor e comente.</span></div>
+        </div>
+        <div style={{ display: 'flex', gap: '15px', background: '#fff', padding: '15px', borderRadius: '10px', border: '2px solid #000' }}>
+          <div style={{ background: '#f1c40f', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', fontWeight: 'bold', flexShrink: 0, border: '2px solid #000' }}>3</div>
+          <div><strong style={{fontSize: '1.2rem', color: '#000'}}>Rotas:</strong><br/><span style={{fontSize:'1.1rem', color:'#333'}}>Use o botão <Navigation size={14} style={{display:'inline'}}/> para traçar o caminho.</span></div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// --- TELA 3: MAPA ---
+// --- TELA 3: MAPA (MANTIDA) ---
 function TelaMapa() {
   const [pontos, setPontos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
@@ -258,29 +275,30 @@ function TelaMapa() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '15px', background: '#2c3e50', color: 'white', display: 'flex', justifyContent: 'space-between', zIndex: 1000 }}>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: 5 }}><ArrowLeft /> Voltar</button>
-        <strong>Mapa AcessaAí</strong>
+      <GlobalAccessibilityStyles />
+      <div style={{ padding: '15px', background: '#000', color: 'white', display: 'flex', justifyContent: 'space-between', zIndex: 1000, borderBottom: '3px solid #0056b3' }}>
+        <button onClick={() => navigate('/')} style={{ background: 'white', border: '2px solid #000', color: '#000', display: 'flex', alignItems: 'center', gap: 5, fontSize: '1rem', padding: '5px 10px', borderRadius: '5px', fontWeight: 'bold' }}><ArrowLeft /> Voltar</button>
+        <strong style={{fontSize: '1.2rem'}}>Mapa AcessaAí</strong>
         <div style={{ width: 24 }}></div>
       </div>
 
       <MapContainer center={[-5.915, -35.263]} zoom={13} style={{ flex: 1 }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OSM" />
         <ControladorDeCliques />
-        {rota && <Polyline positions={rota} color="#3498db" dashArray="10, 10" weight={5} />}
+        {rota && <Polyline positions={rota} color="#0056b3" dashArray="10, 10" weight={6} />}
         
         {pontos.map(p => (
           <Marker key={p.id_firebase} position={[p.lat, p.lng]} icon={criarIcone(p.emoji, p.avaliacao)}>
             <Popup>
-              <div style={{ width: '200px' }}>
+              <div style={{ width: '200px', fontSize: '1.1rem' }}>
                 <strong style={{ color: coresAvaliacao[p.avaliacao] }}>{p.emoji} {p.texto}</strong>
-                <p style={{ margin: '5px 0', fontSize: '14px' }}>"{p.comentario || 'Sem comentários'}"</p>
+                <p style={{ margin: '5px 0', fontSize: '1rem', color: '#000' }}>"{p.comentario || 'Sem comentários'}"</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                    <small>Por: {p.userName?.split(' ')[0]}</small>
                    <div style={{ display: 'flex', gap: '5px' }}>
-                     <button onClick={() => tracarRota(p)} title="Traçar rota até aqui" style={{ background: '#3498db', color: 'white', border: 'none', borderRadius: '5px', padding: '5px', cursor: 'pointer' }}><Navigation size={16}/></button>
+                     <button onClick={() => tracarRota(p)} title="Traçar rota até aqui" style={{ background: '#0056b3', color: 'white', border: '2px solid #000', borderRadius: '5px', padding: '8px', cursor: 'pointer' }}><Navigation size={20}/></button>
                      {auth.currentUser.uid === p.userId && (
-                       <button onClick={() => deleteDoc(doc(db, "pontos", p.id_firebase))} style={{ background: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', padding: '5px' }}><Trash2 size={16}/></button>
+                       <button onClick={() => deleteDoc(doc(db, "pontos", p.id_firebase))} style={{ background: '#d35400', color: 'white', border: '2px solid #000', borderRadius: '5px', padding: '8px' }}><Trash2 size={20}/></button>
                      )}
                    </div>
                 </div>
@@ -291,36 +309,43 @@ function TelaMapa() {
       </MapContainer>
 
       {modalAberto && (
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'white', padding: '20px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.2)', maxHeight: '80vh', overflowY: 'auto' }}>
-          <h3>Novo Reporte 📍</h3>
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'white', padding: '20px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', zIndex: 9999, boxShadow: '0 -5px 20px rgba(0,0,0,0.5)', maxHeight: '80vh', overflowY: 'auto', borderTop: '5px solid #000' }}>
+          <h3 style={{fontSize: '1.8rem', color: '#000', fontWeight:'900'}}>Novo Reporte 📍</h3>
+          
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '15px' }}>
             {Object.entries(opcoesDeficiencia).map(([key, val]) => (
-              <button key={key} onClick={() => { setCategoriaAtiva(key); setProblemaAtivo(val.problemas[0]); }} style={{ padding: '8px 15px', borderRadius: '20px', border: categoriaAtiva === key ? '2px solid #333' : '1px solid #ccc', background: categoriaAtiva === key ? '#eee' : 'white', whiteSpace: 'nowrap' }}>{val.emojiCategoria} {val.titulo}</button>
+              <button key={key} onClick={() => { setCategoriaAtiva(key); setProblemaAtivo(val.problemas[0]); }} style={{ padding: '12px 20px', borderRadius: '30px', border: categoriaAtiva === key ? '3px solid #000' : '2px solid #777', background: categoriaAtiva === key ? '#0056b3' : 'white', color: categoriaAtiva === key ? 'white' : 'black', whiteSpace: 'nowrap', fontSize: '1.1rem', fontWeight: 'bold' }}>{val.emojiCategoria} {val.titulo}</button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px', overflowX: 'auto' }}>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
             {opcoesDeficiencia[categoriaAtiva].problemas.map(prob => (
-              <button key={prob.id} onClick={() => setProblemaAtivo(prob)} style={{ padding: '10px', borderRadius: '10px', background: problemaAtivo.id === prob.id ? '#dff9fb' : '#fff', border: '1px solid #ccc' }}>{prob.emoji} {prob.nome}</button>
+              <button key={prob.id} onClick={() => setProblemaAtivo(prob)} style={{ padding: '12px', borderRadius: '10px', background: problemaAtivo.id === prob.id ? '#d4e6f1' : '#fff', border: '2px solid #000', fontSize: '1rem', fontWeight: problemaAtivo.id === prob.id ? 'bold' : 'normal' }}>{prob.emoji} {prob.nome}</button>
             ))}
           </div>
-          <div style={{ marginTop: '15px' }}>
-            <p style={{ margin: '0 0 5px 0' }}>Nível de Acessibilidade:</p>
+
+          <div style={{ marginTop: '20px' }}>
+            <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', fontSize: '1.2rem' }}>Nível de Acessibilidade:</p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
-              <button onClick={() => setAvaliacao('boa')} style={{ flex: 1, padding: '10px', background: avaliacao === 'boa' ? coresAvaliacao.boa : '#eee', color: avaliacao === 'boa' ? 'white' : 'black', border: 'none', borderRadius: '8px' }}>Boa 😄</button>
-              <button onClick={() => setAvaliacao('media')} style={{ flex: 1, padding: '10px', background: avaliacao === 'media' ? coresAvaliacao.media : '#eee', color: avaliacao === 'media' ? 'white' : 'black', border: 'none', borderRadius: '8px' }}>Média 😐</button>
-              <button onClick={() => setAvaliacao('ruim')} style={{ flex: 1, padding: '10px', background: avaliacao === 'ruim' ? coresAvaliacao.ruim : '#eee', color: avaliacao === 'ruim' ? 'white' : 'black', border: 'none', borderRadius: '8px' }}>Péssima 😡</button>
+              <button onClick={() => setAvaliacao('boa')} style={{ flex: 1, padding: '15px', background: avaliacao === 'boa' ? coresAvaliacao.boa : '#fff', color: avaliacao === 'boa' ? 'white' : 'black', border: '2px solid #000', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Boa 😄</button>
+              <button onClick={() => setAvaliacao('media')} style={{ flex: 1, padding: '15px', background: avaliacao === 'media' ? coresAvaliacao.media : '#fff', color: avaliacao === 'media' ? 'white' : 'black', border: '2px solid #000', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Média 😐</button>
+              <button onClick={() => setAvaliacao('ruim')} style={{ flex: 1, padding: '15px', background: avaliacao === 'ruim' ? coresAvaliacao.ruim : '#fff', color: avaliacao === 'ruim' ? 'white' : 'black', border: '2px solid #000', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Péssima 😡</button>
             </div>
           </div>
-          <textarea placeholder="Deixe um comentário..." value={comentario} onChange={(e) => setComentario(e.target.value)} style={{ width: '100%', marginTop: '10px', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }} rows={3} />
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button onClick={() => setModalAberto(false)} style={{ flex: 1, padding: '15px', background: '#ccc', border: 'none', borderRadius: '10px' }}>Cancelar</button>
-            <button onClick={salvarPonto} disabled={enviando} style={{ flex: 1, padding: '15px', background: '#2c3e50', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>{enviando ? 'Enviando...' : 'Publicar 📢'}</button>
+          
+          <textarea placeholder="Deixe um comentário..." value={comentario} onChange={(e) => setComentario(e.target.value)} style={{ width: '100%', marginTop: '20px', padding: '15px', borderRadius: '10px', border: '2px solid #000', fontSize: '1.1rem' }} rows={3} />
+          
+          <div style={{ display: 'flex', gap: '15px', marginTop: '25px' }}>
+            <button onClick={() => setModalAberto(false)} style={{ flex: 1, padding: '15px', background: '#ccc', color: '#000', border: '2px solid #000', borderRadius: '10px', fontSize: '1.2rem', fontWeight: 'bold' }}>Cancelar</button>
+            <button onClick={salvarPonto} disabled={enviando} style={{ flex: 1, padding: '15px', background: '#0056b3', color: 'white', border: '2px solid #000', borderRadius: '10px', fontWeight: 'bold', fontSize: '1.2rem' }}>{enviando ? 'Enviando...' : 'Publicar 📢'}</button>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+function TelaHistorico() { return <div style={{padding: 20}}><h2>Histórico em breve...</h2></div> }
 
 export default function App() {
   const [user, setUser] = useState(null);
